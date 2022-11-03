@@ -1,0 +1,38 @@
+version: "3.7"
+services:
+  es:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:6.3.2"
+    environment:
+      - discovery.type=single-node
+    networks:
+      - db
+    volumes:
+      - db_es:/usr/share/elasticsearch/data
+  app:
+    build: .
+    networks:
+      - db
+      - main
+    depends_on:
+      - es
+  nginx:
+    image: nginx:1.19-alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf    
+      - ./project/flask-app/templates/index.html:/usr/share/nginx/html/index.html
+      - ./project/flask-app/static/:/usr/share/nginx/html/static
+    ports:
+      - "80:80"
+    networks:
+      - main
+    depends_on:
+      - es
+      - app
+networks:
+  main:
+    driver: bridge
+  db:
+    driver: bridge
+volumes:
+  db_es:
+    driver: local
